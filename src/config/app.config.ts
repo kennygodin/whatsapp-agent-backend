@@ -6,5 +6,5 @@ export default registerAs('app', () => ({
   corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
     .map((origin) => origin.trim()),
-  publicBaseUrl: process.env.PUBLIC_BASE_URL,
+  publicBaseUrl: process.env.PUBLIC_BASE_URL?.replace(/\/+$/, ''),
 }));

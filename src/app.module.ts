@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import redisConfig from './config/redis.config';
+import twilioConfig from './config/twilio.config';
+import { redisConnectionOptions } from './common/utils/redis-connection.util';
+import { DEFAULT_JOB_OPTIONS } from './common/queue.constants';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,15 +13,25 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import appConfig from './config/app.config';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { WhatsappModule } from './module/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig],
+      load: [appConfig, redisConfig, twilioConfig],
       validate: validateEnv,
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: redisConnectionOptions(config),
+        defaultJobOptions: DEFAULT_JOB_OPTIONS,
+      }),
+    }),
+
     PrismaModule,
+    WhatsappModule,
   ],
   controllers: [AppController],
   providers: [
