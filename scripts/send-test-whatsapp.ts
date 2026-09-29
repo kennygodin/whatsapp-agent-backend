@@ -5,6 +5,7 @@ import {
   DEFAULT_TEST_BODY,
   DEFAULT_TEST_FROM,
   TEST_PROFILE_NAME,
+  WEBHOOK_ACCEPTED,
   WEBHOOK_PATH,
 } from './scripts.constants';
 import { Logger } from '@nestjs/common';
@@ -39,7 +40,7 @@ async function main() {
     body: new URLSearchParams(params),
   });
 
-  logger.log(`${response.status} ${await response.text()}`);
+  logger.log(`${WEBHOOK_ACCEPTED(response.status)} ${await response.text()}`);
 }
 
 main().catch((error) => {
