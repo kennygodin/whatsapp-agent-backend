@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LeadStage {
+  new
+  engaged
+  order_started
+  converted
+  dropped_off
+}
+
+enum OrderStatus {
+  pending
+  paid
+  cancelled
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+enum MessageStatus {
+  received
+  queued
+  sent
+  failed
+}
+
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum BotMode {
+  active
+  paused
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads Lead[]
+
+  @@map("customers")
+}
+
+model Lead {
+  id               String    @id @default(uuid())
+  customerId       String
+  stage            LeadStage @default(new)
+  botMode          BotMode   @default(active)
+  escalatedAt      DateTime?
+  escalationReason String?
+  lastInboundAt    DateTime  @default(now())
+  closedAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  orders      Order[]
+  transitions StageTransition[]
+
+  @@index([customerId])
+  @@index([stage, lastInboundAt])
+  @@map("leads")
+}
+
+model StageTransition {
+  id        String     @id @default(uuid())
+  leadId    String
+  fromStage LeadStage?
+  toStage   LeadStage
+  createdAt DateTime   @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([toStage, createdAt])
+  @@map("stage_transitions")
+}
+
+model Message {
+  id          String           @id @default(uuid())
+  leadId      String
+  direction   MessageDirection
+  body        String
+  hasMedia    Boolean          @default(false)
+  status      MessageStatus
+  twilioSid   String?          @unique
+  errorCode   String?
+  processedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+  @@map("messages")
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  sku         String        @unique
+  name        String
+  description String
+  price       Int
+  stock       Int
+  status      ProductStatus @default(active)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  orders Order[]
+
+  @@map("products")
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  leadId           String
+  productId        String
+  quantity         Int
+  unitPrice        Int
+  totalAmount      Int
+  status           OrderStatus @default(pending)
+  paymentReference String?     @unique
+  paymentUrl       String?
+  paidAt           DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  lead    Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([leadId])
+  @@index([status])
+  @@map("orders")
+}

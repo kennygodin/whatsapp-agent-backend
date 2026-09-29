@@ -7,6 +7,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import appConfig from './config/app.config';
 import { validateEnv } from './config/env.validation';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { validateEnv } from './config/env.validation';
       load: [appConfig],
       validate: validateEnv,
     }),
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [
