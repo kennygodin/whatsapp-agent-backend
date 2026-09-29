@@ -1,0 +1,16 @@
+app = 'whatsapp-agent-redis'
+primary_region = 'lhr'
+
+[build]
+  image = 'redis:7-alpine'
+
+[processes]
+  app = 'sh -c "redis-server --requirepass \"$REDIS_PASSWORD\" --appendonly yes --maxmemory-policy noeviction"'
+
+[[mounts]]
+  source = 'redis_data'
+  destination = '/data'
+
+[[vm]]
+  memory = '256mb'
+  cpus = 1
