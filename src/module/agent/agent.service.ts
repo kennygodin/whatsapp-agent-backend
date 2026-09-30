@@ -1,10 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { LlmRouter } from './llm/llm-router';
 import type { ChatMessage, LLMProvider } from './llm/llm.types';
 import type { ToolContext } from './tools/agent-tool.interface';
 import { ToolRegistry } from './tools/tool-registry';
 import {
   AGENT_ITERATION_CAP_REACHED,
-  LLM_PROVIDER,
   MAX_AGENT_ITERATIONS,
 } from './agent.constants';
 
@@ -16,6 +16,7 @@ export interface AgentTurnInput {
 
 export interface AgentTurnResult {
   reply: string | null;
+  provider: string;
   iterations: number;
   toolCalls: string[];
   hitIterationCap: boolean;
@@ -26,25 +27,29 @@ export class AgentService {
   private readonly logger = new Logger(AgentService.name);
 
   constructor(
-    @Inject(LLM_PROVIDER) private readonly llm: LLMProvider,
+    private readonly llmRouter: LlmRouter,
     private readonly toolRegistry: ToolRegistry,
   ) {}
 
-  async runTurn({
-    system,
-    history,
-    context,
-  }: AgentTurnInput): Promise<AgentTurnResult> {
+  runTurn(input: AgentTurnInput): Promise<AgentTurnResult> {
+    return this.llmRouter.run((provider) => this.runLoop(provider, input));
+  }
+
+  private async runLoop(
+    llm: LLMProvider,
+    { system, history, context }: AgentTurnInput,
+  ): Promise<AgentTurnResult> {
     const messages: ChatMessage[] = [...history];
     const tools = this.toolRegistry.definitions();
     const toolCalls: string[] = [];
 
     for (let iteration = 1; iteration <= MAX_AGENT_ITERATIONS; iteration++) {
-      const response = await this.llm.complete({ system, messages, tools });
+      const response = await llm.complete({ system, messages, tools });
 
       if (response.toolCalls.length === 0) {
         return {
           reply: response.content?.trim() || null,
+          provider: llm.name,
           iterations: iteration,
           toolCalls,
           hitIterationCap: false,
@@ -73,6 +78,7 @@ export class AgentService {
     this.logger.warn(AGENT_ITERATION_CAP_REACHED);
     return {
       reply: null,
+      provider: llm.name,
       iterations: MAX_AGENT_ITERATIONS,
       toolCalls,
       hitIterationCap: true,

@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import redisConfig from './config/redis.config';
 import twilioConfig from './config/twilio.config';
+import llmConfig from './config/llm.config';
 import { redisConnectionOptions } from './common/utils/redis-connection.util';
 import { DEFAULT_JOB_OPTIONS } from './common/queue.constants';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -19,7 +20,7 @@ import { WhatsappModule } from './module/whatsapp/whatsapp.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, redisConfig, twilioConfig],
+      load: [appConfig, redisConfig, twilioConfig, llmConfig],
       validate: validateEnv,
     }),
     BullModule.forRootAsync({

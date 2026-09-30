@@ -4,6 +4,7 @@ import type { LLMProvider, LLMRequest, LLMResponse } from './llm/llm.types';
 import type { AgentTool } from './tools/agent-tool.interface';
 import { ToolInputError } from './tools/tool-input.error';
 import { ToolRegistry } from './tools/tool-registry';
+import { LlmRouter } from './llm/llm-router';
 
 const CONTEXT = { leadId: 'lead-1', customerId: 'customer-1' };
 const SYSTEM = 'You are a test assistant.';
@@ -40,7 +41,10 @@ const lookupTool: AgentTool = {
 
 function buildAgent(responses: LLMResponse[]) {
   const { provider, requests } = scriptedProvider(responses);
-  const agent = new AgentService(provider, new ToolRegistry([lookupTool]));
+  const agent = new AgentService(
+    new LlmRouter([provider]),
+    new ToolRegistry([lookupTool]),
+  );
   return { agent, requests };
 }
 
@@ -60,6 +64,7 @@ describe('AgentService', () => {
 
     expect(result).toEqual({
       reply: 'Hello there!',
+      provider: 'scripted',
       iterations: 1,
       toolCalls: [],
       hitIterationCap: false,

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ProductsModule } from '../products/products.module';
 import { AgentService } from './agent.service';
-import { AGENT_TOOLS, LLM_PROVIDER } from './agent.constants';
-import { FakeLLMProvider } from './llm/fake-llm.provider';
+import { AGENT_TOOLS, LLM_PROVIDERS } from './agent.constants';
+import { createLlmProviders } from './llm/llm-providers.factory';
+import { LlmRouter } from './llm/llm-router';
 import type { AgentTool } from './tools/agent-tool.interface';
 import { SearchCatalogTool } from './tools/search-catalog.tool';
 import { ToolRegistry } from './tools/tool-registry';
@@ -20,7 +22,12 @@ import { ToolRegistry } from './tools/tool-registry';
       ],
       inject: [SearchCatalogTool],
     },
-    { provide: LLM_PROVIDER, useClass: FakeLLMProvider },
+    {
+      provide: LLM_PROVIDERS,
+      useFactory: createLlmProviders,
+      inject: [ConfigService],
+    },
+    LlmRouter,
   ],
   exports: [AgentService],
 })
