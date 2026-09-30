@@ -2,7 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { QUEUES } from '../../common/queue.constants';
-import { InboundMessageJob } from './interfaces/inbound-message-job.interface';
+import type { InboundMessageJob } from './interfaces/inbound-message-job.interface';
 import {
   INTAKE_JOB_NAME,
   INVALID_INBOUND_PAYLOAD,

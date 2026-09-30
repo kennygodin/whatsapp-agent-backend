@@ -4,8 +4,8 @@ import { BotMode, Message } from '../../../generated/prisma/client';
 import { QUEUES } from '../../../common/queue.constants';
 import { LeadsService } from '../../leads/leads.service';
 import { MessagesService } from '../../messages/messages.service';
-import { ConversationTurnJob } from '../interfaces/conversation-turn-job.interface';
-import { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
+import type { ConversationTurnJob } from '../interfaces/conversation-turn-job.interface';
+import type { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
 import {
   ECHO_REPLY_PREFIX,
   MAX_WHATSAPP_BODY_LENGTH,
