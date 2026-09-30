@@ -1,0 +1,35 @@
+app = 'whatsapp-agent-backend'
+primary_region = 'lhr'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[deploy]
+  release_command = 'sh -c "bunx prisma migrate deploy && bunx prisma db seed"'
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '3000'
+  PUBLIC_BASE_URL = 'https://whatsapp-agent-backend.fly.dev'
+  REDIS_HOST = 'whatsapp-agent-redis.internal'
+  REDIS_PORT = '6379'
+  TWILIO_WHATSAPP_FROM = 'whatsapp:+14155238886'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.checks]]
+    grace_period = '15s'
+    interval = '30s'
+    method = 'GET'
+    path = '/api/v1'
+    timeout = '5s'
+
+[[vm]]
+  memory = '512mb'
+  cpus = 1

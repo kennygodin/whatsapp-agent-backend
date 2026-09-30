@@ -9,6 +9,7 @@ import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SKIP_TRANSFORM_KEY } from '../decorators/skip-transform.decorator';
 
 export interface ApiResponse<T> {
   success: true;
@@ -31,12 +32,17 @@ function isPaginatedResult(
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
-
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<ApiResponse<unknown>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const handler = context.getHandler();
+
+    const skipTransform = this.reflector.get<boolean>(
+      SKIP_TRANSFORM_KEY,
+      handler,
+    );
+    if (skipTransform) {
+      return next.handle();
+    }
+
     const explicitCode = this.reflector.get<number>(
       HTTP_CODE_METADATA,
       handler,
