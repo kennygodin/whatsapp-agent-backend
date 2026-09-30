@@ -12,7 +12,7 @@ export const OUTBOUND_JOB_NAME = 'send-message';
 
 export const INTAKE_CONCURRENCY = 1;
 export const TURN_CONCURRENCY = 5;
-export const TURN_DEBOUNCE_MS = 3000;
+export const TURN_DEBOUNCE_MS = 6000;
 export const OUTBOUND_RATE_LIMIT = { max: 1, duration: 3000 };
 export const TWILIO_REQUEST_TIMEOUT_MS = 10_000;
 export const MAX_WHATSAPP_BODY_LENGTH = 1600;
