@@ -60,6 +60,9 @@ export const agentTurnSummary = (
 ) =>
   `lead=${leadId} skill=${skill.id}@v${skill.version} provider=${result.provider} iterations=${result.iterations} tools=[${result.toolCalls.join(',')}] corrections=${result.corrections} rejected=${result.rejected}`;
 
+export const ungroundedPricesLog = (leadId: string, amounts: number[]) =>
+  `lead=${leadId} reply mentioned ungrounded prices ${formatPriceList(amounts)}`;
+
 export const MAX_REPLY_CORRECTIONS = 1;
 export const AGENT_REPLY_REJECTED =
   'Agent reply failed validation after correction';
