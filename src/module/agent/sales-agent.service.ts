@@ -8,6 +8,7 @@ import {
   HISTORY_MESSAGE_LIMIT,
   agentTurnSummary,
   ungroundedPriceCorrection,
+  ungroundedPricesLog,
 } from './agent.constants';
 import { findUngroundedPrices } from './grounding/price-check';
 import { toChatHistory } from './context/conversation-history';
@@ -49,9 +50,11 @@ export class SalesAgentService {
       context: { leadId: input.leadId, customerId: input.customerId },
       validateReply: (reply, facts) => {
         const ungrounded = findUngroundedPrices(reply, facts);
-        return ungrounded.length > 0
-          ? ungroundedPriceCorrection(ungrounded)
-          : null;
+        if (ungrounded.length === 0) {
+          return null;
+        }
+        this.logger.warn(ungroundedPricesLog(input.leadId, ungrounded));
+        return ungroundedPriceCorrection(ungrounded);
       },
     });
 

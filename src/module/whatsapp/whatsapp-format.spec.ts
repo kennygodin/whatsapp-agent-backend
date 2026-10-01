@@ -4,6 +4,10 @@ import { toWhatsAppFormatting } from './whatsapp-format';
 describe('toWhatsAppFormatting', () => {
   it.each([
     [
+      'You’d like ***2*** of the *20,000mAh Power Bank* priced at ***₦25,000*** each.',
+      'You’d like *2* of the *20,000mAh Power Bank* priced at *₦25,000* each.',
+    ],
+    [
       'Yes, *Wireless Earbuds* for **₦32,000**.',
       'Yes, *Wireless Earbuds* for *₦32,000*.',
     ],
