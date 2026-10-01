@@ -10,6 +10,7 @@ import { MessagesService } from '../../messages/messages.service';
 import type { ConversationTurnJob } from '../interfaces/conversation-turn-job.interface';
 import type { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
 import { remainingWaitMs } from '../turn-timing';
+import { toWhatsAppFormatting } from '../whatsapp-format';
 import {
   AGENT_FALLBACK_REPLY,
   AGENT_TURN_FAILED,
@@ -100,7 +101,11 @@ export class ConversationTurnProcessor extends WorkerHost {
         throw error;
       }
       this.logger.error(`${AGENT_TURN_FAILED} (lead ${input.leadId})`, error);
-      return AGENT_FALLBACK_REPLY;
+      const result = await this.salesAgentService.respond(input);
+      return toWhatsAppFormatting(result.reply ?? AGENT_FALLBACK_REPLY).slice(
+        0,
+        MAX_WHATSAPP_BODY_LENGTH,
+      );
     }
   }
 }
