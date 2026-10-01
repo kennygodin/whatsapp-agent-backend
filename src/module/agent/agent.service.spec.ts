@@ -68,6 +68,8 @@ describe('AgentService', () => {
       iterations: 1,
       toolCalls: [],
       hitIterationCap: false,
+      corrections: 0,
+      rejected: false,
     });
     expect(requests).toHaveLength(1);
     expect(requests[0].tools.map((tool) => tool.name)).toEqual(['lookup']);
@@ -172,5 +174,79 @@ describe('AgentService', () => {
     expect(result.reply).toBeNull();
     expect(result.hitIterationCap).toBe(true);
     expect(requests).toHaveLength(MAX_AGENT_ITERATIONS);
+  });
+
+  describe('reply validation', () => {
+    const rejectInventedPrice = (reply: string, facts: string) =>
+      reply.includes('₦35,000') && !facts.includes('₦35,000')
+        ? 'Only use prices from search results.'
+        : null;
+
+    it('asks the model to correct an invalid reply once, then accepts the fix', async () => {
+      const { agent, requests } = buildAgent([
+        { content: 'Try the fitness band for ₦35,000.', toolCalls: [] },
+        { content: 'Sorry, the smart watch is out of stock.', toolCalls: [] },
+      ]);
+
+      const result = await agent.runTurn({
+        system: SYSTEM,
+        history: userSays('smart watch?'),
+        context: CONTEXT,
+        validateReply: rejectInventedPrice,
+      });
+
+      expect(result.reply).toBe('Sorry, the smart watch is out of stock.');
+      expect(result.corrections).toBe(1);
+      expect(result.rejected).toBe(false);
+      expect(requests[1].messages.slice(-2)).toEqual([
+        { role: 'assistant', content: 'Try the fitness band for ₦35,000.' },
+        { role: 'user', content: 'Only use prices from search results.' },
+      ]);
+    });
+
+    it('rejects the reply when the correction also fails', async () => {
+      const { agent } = buildAgent([
+        { content: 'Fitness band, ₦35,000.', toolCalls: [] },
+        { content: 'Really, ₦35,000.', toolCalls: [] },
+      ]);
+
+      const result = await agent.runTurn({
+        system: SYSTEM,
+        history: userSays('smart watch?'),
+        context: CONTEXT,
+        validateReply: rejectInventedPrice,
+      });
+
+      expect(result.reply).toBeNull();
+      expect(result.rejected).toBe(true);
+    });
+
+    it('counts tool results as facts the reply may use', async () => {
+      const pricedTool: AgentTool = {
+        definition: { ...lookupTool.definition, name: 'priced' },
+        execute: async () => ({ price: '₦35,000' }),
+      };
+      const { provider } = scriptedProvider([
+        {
+          content: null,
+          toolCalls: [{ id: 'call-1', name: 'priced', arguments: {} }],
+        },
+        { content: 'It costs ₦35,000.', toolCalls: [] },
+      ]);
+      const agent = new AgentService(
+        new LlmRouter([provider]),
+        new ToolRegistry([pricedTool]),
+      );
+
+      const result = await agent.runTurn({
+        system: SYSTEM,
+        history: userSays('price?'),
+        context: CONTEXT,
+        validateReply: rejectInventedPrice,
+      });
+
+      expect(result.reply).toBe('It costs ₦35,000.');
+      expect(result.corrections).toBe(0);
+    });
   });
 });

@@ -3,7 +3,13 @@ import type { LeadStage } from '../../generated/prisma/client';
 import { MessagesService } from '../messages/messages.service';
 import { AgentService } from './agent.service';
 import type { AgentTurnResult } from './agent.service';
-import { HISTORY_MESSAGE_LIMIT, agentTurnSummary } from './agent.constants';
+import {
+  GROUNDING_FALLBACK_REPLY,
+  HISTORY_MESSAGE_LIMIT,
+  agentTurnSummary,
+  ungroundedPriceCorrection,
+} from './agent.constants';
+import { findUngroundedPrices } from './grounding/price-check';
 import { toChatHistory } from './context/conversation-history';
 import {
   buildSystemPrompt,
@@ -41,9 +47,17 @@ export class SalesAgentService {
       }),
       history: toChatHistory(recent),
       context: { leadId: input.leadId, customerId: input.customerId },
+      validateReply: (reply, facts) => {
+        const ungrounded = findUngroundedPrices(reply, facts);
+        return ungrounded.length > 0
+          ? ungroundedPriceCorrection(ungrounded)
+          : null;
+      },
     });
 
     this.logger.log(agentTurnSummary(input.leadId, skill, result));
-    return result;
+    return result.rejected
+      ? { ...result, reply: GROUNDING_FALLBACK_REPLY }
+      : result;
   }
 }

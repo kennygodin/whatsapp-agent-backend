@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { LeadStage } from '../../../generated/prisma/client';
 import { PRODUCT_QA_SKILL } from './product-qa.skill';
 import { buildSystemPrompt, skillForStage } from './system-prompt.builder';
-import { UNKNOWN_CUSTOMER_NAME } from './skills.constants';
+import { STORE_FACTS, UNKNOWN_CUSTOMER_NAME } from './skills.constants';
 
 describe('system prompt', () => {
   it('has a skill for every lead stage', () => {
@@ -22,6 +22,7 @@ describe('system prompt', () => {
     expect(prompt).toContain(PRODUCT_QA_SKILL.instructions);
     expect(prompt).toContain("Customer's WhatsApp name: Ada");
     expect(prompt).toContain('Funnel stage: engaged');
+    expect(prompt).toContain(STORE_FACTS);
   });
 
   it('handles a customer without a WhatsApp name', () => {

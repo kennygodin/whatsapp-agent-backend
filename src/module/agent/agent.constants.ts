@@ -50,9 +50,26 @@ export const llmRejectedMessage = (provider: string) =>
 export const agentTurnSummary = (
   leadId: string,
   skill: { id: string; version: number },
-  result: { provider: string; iterations: number; toolCalls: string[] },
+  result: {
+    provider: string;
+    iterations: number;
+    toolCalls: string[];
+    corrections: number;
+    rejected: boolean;
+  },
 ) =>
-  `lead=${leadId} skill=${skill.id}@v${skill.version} provider=${result.provider} iterations=${result.iterations} tools=[${result.toolCalls.join(',')}]`;
+  `lead=${leadId} skill=${skill.id}@v${skill.version} provider=${result.provider} iterations=${result.iterations} tools=[${result.toolCalls.join(',')}] corrections=${result.corrections} rejected=${result.rejected}`;
+
+export const MAX_REPLY_CORRECTIONS = 1;
+export const AGENT_REPLY_REJECTED =
+  'Agent reply failed validation after correction';
+
+export const formatPriceList = (amounts: number[]) =>
+  amounts.map((amount) => `₦${amount.toLocaleString('en-NG')}`).join(', ');
+export const ungroundedPriceCorrection = (amounts: number[]) =>
+  `Automatic check: your reply mentions ${formatPriceList(amounts)}, which did not come from a search_catalog result in this conversation. Rewrite the reply using only products and prices returned by search_catalog. If you want to suggest an alternative product, search for it first. If nothing suitable was found, say so.`;
+export const GROUNDING_FALLBACK_REPLY =
+  "Sorry, I couldn't confirm that. Which product would you like me to check for you?";
 
 export const HISTORY_MESSAGE_LIMIT = 12;
 export const MAX_HISTORY_MESSAGE_CHARS = 1000;
