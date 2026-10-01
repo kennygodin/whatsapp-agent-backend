@@ -3,11 +3,11 @@ import { Job, Queue } from 'bullmq';
 import { QUEUES } from '../../../common/queue.constants';
 import { LeadsService } from '../../leads/leads.service';
 import { MessagesService } from '../../messages/messages.service';
-import { ConversationTurnJob } from '../interfaces/conversation-turn-job.interface';
-import { InboundMessageJob } from '../interfaces/inbound-message-job.interface';
+import type { ConversationTurnJob } from '../interfaces/conversation-turn-job.interface';
+import type { InboundMessageJob } from '../interfaces/inbound-message-job.interface';
 import {
   INTAKE_CONCURRENCY,
-  TURN_DEBOUNCE_MS,
+  TURN_INITIAL_DELAY_MS,
   TURN_JOB_NAME,
 } from '../whatsapp.constants';
 
@@ -44,7 +44,7 @@ export class IntakeProcessor extends WorkerHost {
       TURN_JOB_NAME,
       { leadId: lead.id },
       {
-        delay: TURN_DEBOUNCE_MS,
+        delay: TURN_INITIAL_DELAY_MS,
         deduplication: { id: lead.id, keepLastIfActive: true },
       },
     );

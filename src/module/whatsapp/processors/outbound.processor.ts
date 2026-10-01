@@ -4,7 +4,7 @@ import { Job, UnrecoverableError } from 'bullmq';
 import { MessageStatus } from '../../../generated/prisma/client';
 import { QUEUES } from '../../../common/queue.constants';
 import { MessagesService } from '../../messages/messages.service';
-import { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
+import type { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
 import { TwilioService } from '../twilio.service';
 import {
   OUTBOUND_RATE_LIMIT,
