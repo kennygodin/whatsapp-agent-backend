@@ -12,13 +12,34 @@ export const OUTBOUND_JOB_NAME = 'send-message';
 
 export const INTAKE_CONCURRENCY = 1;
 export const TURN_CONCURRENCY = 5;
-export const TURN_DEBOUNCE_MS = 6000;
+export const TURN_INITIAL_DELAY_MS = 2000;
+export const SHORT_QUIET_MS = 2000;
+export const DEFAULT_QUIET_MS = 5000;
+export const LONG_QUIET_MS = 8000;
+export const MAX_TURN_WAIT_MS = 15_000;
+export const CONTINUATION_ENDINGS = [',', ':', '-', '…', '...'];
+export const CONTINUATION_WORDS = new Set([
+  'and',
+  'but',
+  'so',
+  'or',
+  'also',
+  'because',
+  'cos',
+  'then',
+  'with',
+  'plus',
+  'if',
+]);
+
 export const OUTBOUND_RATE_LIMIT = { max: 1, duration: 3000 };
 export const TWILIO_REQUEST_TIMEOUT_MS = 10_000;
 export const MAX_WHATSAPP_BODY_LENGTH = 1600;
 
-export const ECHO_REPLY_PREFIX = 'You said: ';
 export const MEDIA_NOT_SUPPORTED_REPLY =
   "Sorry, I can only read text messages for now. Please type your question and I'll help you right away.";
 export const TWILIO_REQUEST_TIMED_OUT = 'Twilio request timed out';
 export const OUTBOUND_SEND_FAILED = 'Failed to send WhatsApp message';
+export const AGENT_FALLBACK_REPLY =
+  "Sorry, I'm having a little trouble right now. Please send your message again in a minute.";
+export const AGENT_TURN_FAILED = 'Agent turn failed on final attempt';

@@ -47,6 +47,12 @@ export const llmUnavailableMessage = (provider: string) =>
   `${provider} unavailable, trying next provider`;
 export const llmRejectedMessage = (provider: string) =>
   `${provider} rejected the request (check API key, model name or request shape)`;
+export const agentTurnSummary = (
+  leadId: string,
+  skill: { id: string; version: number },
+  result: { provider: string; iterations: number; toolCalls: string[] },
+) =>
+  `lead=${leadId} skill=${skill.id}@v${skill.version} provider=${result.provider} iterations=${result.iterations} tools=[${result.toolCalls.join(',')}]`;
 
 export const HISTORY_MESSAGE_LIMIT = 12;
 export const MAX_HISTORY_MESSAGE_CHARS = 1000;

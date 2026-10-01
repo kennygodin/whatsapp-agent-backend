@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { MessagesModule } from '../messages/messages.module';
 import { ProductsModule } from '../products/products.module';
 import { AgentService } from './agent.service';
+import { SalesAgentService } from './sales-agent.service';
 import { AGENT_TOOLS, LLM_PROVIDERS } from './agent.constants';
 import { createLlmProviders } from './llm/llm-providers.factory';
 import { LlmRouter } from './llm/llm-router';
@@ -10,9 +12,10 @@ import { SearchCatalogTool } from './tools/search-catalog.tool';
 import { ToolRegistry } from './tools/tool-registry';
 
 @Module({
-  imports: [ProductsModule],
+  imports: [ProductsModule, MessagesModule],
   providers: [
     AgentService,
+    SalesAgentService,
     ToolRegistry,
     SearchCatalogTool,
     {
@@ -29,6 +32,6 @@ import { ToolRegistry } from './tools/tool-registry';
     },
     LlmRouter,
   ],
-  exports: [AgentService],
+  exports: [SalesAgentService],
 })
 export class AgentModule {}

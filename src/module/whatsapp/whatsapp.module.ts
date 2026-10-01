@@ -9,6 +9,7 @@ import { OutboundProcessor } from './processors/outbound.processor';
 import { TwilioService } from './twilio.service';
 import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
+import { AgentModule } from '../agent/agent.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WhatsappService } from './whatsapp.service';
       { name: QUEUES.CONVERSATION_TURN },
       { name: QUEUES.WHATSAPP_OUTBOUND },
     ),
+    AgentModule,
     LeadsModule,
     MessagesModule,
   ],
