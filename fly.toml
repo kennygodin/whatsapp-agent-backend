@@ -14,6 +14,11 @@ primary_region = 'lhr'
   REDIS_HOST = 'whatsapp-agent-redis.internal'
   REDIS_PORT = '6379'
   TWILIO_WHATSAPP_FROM = 'whatsapp:+14155238886'
+  LLM_PROVIDER_CHAIN = 'groq,cerebras,gemini'
+  GROQ_MODEL = 'openai/gpt-oss-120b'
+  CEREBRAS_MODEL = 'gpt-oss-120b'
+  GEMINI_MODEL = 'gemini-3.5-flash-lite'
+
 
 [http_service]
   internal_port = 3000
