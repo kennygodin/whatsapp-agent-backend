@@ -34,6 +34,11 @@ export class MessagesService {
     return this.messagesRepository.markProcessed(ids);
   }
 
+  async findRecent(leadId: string, limit: number) {
+    const newestFirst = await this.messagesRepository.findRecent(leadId, limit);
+    return newestFirst.reverse();
+  }
+
   createReply(leadId: string, body: string, processedIds: string[]) {
     return this.messagesRepository.createOutboundAndMarkProcessed(
       leadId,

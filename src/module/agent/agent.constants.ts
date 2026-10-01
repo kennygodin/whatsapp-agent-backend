@@ -47,3 +47,7 @@ export const llmUnavailableMessage = (provider: string) =>
   `${provider} unavailable, trying next provider`;
 export const llmRejectedMessage = (provider: string) =>
   `${provider} rejected the request (check API key, model name or request shape)`;
+
+export const HISTORY_MESSAGE_LIMIT = 12;
+export const MAX_HISTORY_MESSAGE_CHARS = 1000;
+export const MEDIA_PLACEHOLDER = '[sent a photo, voice note or file]';

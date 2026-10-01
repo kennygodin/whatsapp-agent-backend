@@ -32,6 +32,20 @@ export class MessagesRepository {
     });
   }
 
+  findRecent(leadId: string, limit: number) {
+    return this.prisma.message.findMany({
+      where: {
+        leadId,
+        NOT: {
+          direction: MessageDirection.outbound,
+          status: MessageStatus.failed,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
   markProcessed(ids: string[]) {
     return this.prisma.message.updateMany({
       where: { id: { in: ids } },
