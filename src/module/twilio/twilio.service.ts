@@ -9,7 +9,7 @@ import {
   TWILIO_REQUEST_TIMEOUT_MS,
   WHATSAPP_ADDRESS_PREFIX,
   WHATSAPP_WEBHOOK_ROUTE,
-} from './whatsapp.constants';
+} from '../whatsapp/whatsapp.constants';
 
 @Injectable()
 export class TwilioService {

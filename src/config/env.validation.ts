@@ -41,6 +41,12 @@ const envValidationSchema = Joi.object({
   CEREBRAS_MODEL: requiredWhenInChain('cerebras'),
   GEMINI_API_KEY: requiredWhenInChain('gemini'),
   GEMINI_MODEL: requiredWhenInChain('gemini'),
+  RESEND_API_KEY: Joi.string().required(),
+  MAIL_FROM: Joi.string().email().required(),
+  ALERT_EMAIL: Joi.string().email().required(),
+  ALERT_WHATSAPP: Joi.string()
+    .pattern(/^\+\d+$/)
+    .required(),
 });
 
 export function validateEnv(config: Record<string, unknown>) {

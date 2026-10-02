@@ -16,9 +16,7 @@ export class LeadsService {
       phone,
       profileName,
     );
-    const openLead = await this.leadsRepository.findOpenByCustomer(
-      customer.id,
-    );
+    const openLead = await this.leadsRepository.findOpenByCustomer(customer.id);
     if (openLead) {
       return { lead: openLead, isNew: false };
     }
@@ -42,6 +40,24 @@ export class LeadsService {
       throw new Error(LEAD_NOT_FOUND);
     }
     return lead;
+  }
+
+  async pauseForEscalation(id: string, reason: string) {
+    const escalatedAt = new Date();
+    const { count } = await this.leadsRepository.pauseForEscalation(
+      id,
+      reason,
+      escalatedAt,
+    );
+    if (count === 0) {
+      return null;
+    }
+
+    const lead = await this.leadsRepository.findWithCustomerContact(id);
+    if (!lead) {
+      throw new Error(LEAD_NOT_FOUND);
+    }
+    return { lead, escalatedAt };
   }
 
   transitionStage(id: string, from: LeadStage, to: LeadStage) {

@@ -4,6 +4,7 @@ export const QUEUES = {
   WHATSAPP_INTAKE: 'whatsapp-intake',
   CONVERSATION_TURN: 'conversation-turn',
   WHATSAPP_OUTBOUND: 'whatsapp-outbound',
+  ALERTS: 'alerts',
 } as const;
 
 export const DEFAULT_JOB_OPTIONS: DefaultJobOptions = {

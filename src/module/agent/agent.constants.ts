@@ -77,3 +77,10 @@ export const GROUNDING_FALLBACK_REPLY =
 export const HISTORY_MESSAGE_LIMIT = 12;
 export const MAX_HISTORY_MESSAGE_CHARS = 1000;
 export const MEDIA_PLACEHOLDER = '[sent a photo, voice note or file]';
+export const ESCALATE_TOOL_NAME = 'escalate_to_human';
+export const ESCALATE_DESCRIPTION =
+  'Hand this conversation to a human team member and pause automated replies. Use it when the customer asks for a person, is upset or complaining, asks about refunds, returns, warranty or a problem with an order, or when you cannot help after trying. After calling it, tell the customer a team member will reply in this chat soon.';
+export const ESCALATE_REASON_DESCRIPTION =
+  'One short sentence for the team member, e.g. "Customer wants a refund for a faulty charger".';
+export const ESCALATION_REASON_REQUIRED = 'reason must be a non-empty string';
+export const MAX_ESCALATION_REASON_LENGTH = 300;

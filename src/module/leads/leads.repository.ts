@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { LeadStage } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CLOSED_LEAD_STAGES } from './leads.constants';
+import { BotMode, LeadStage } from '../../generated/prisma/client';
 
 @Injectable()
 export class LeadsRepository {
@@ -27,6 +27,20 @@ export class LeadsRepository {
         customerId,
         transitions: { create: { toStage: LeadStage.new } },
       },
+    });
+  }
+
+  pauseForEscalation(id: string, reason: string, escalatedAt: Date) {
+    return this.prisma.lead.updateMany({
+      where: { id, botMode: BotMode.active },
+      data: { botMode: BotMode.paused, escalatedAt, escalationReason: reason },
+    });
+  }
+
+  findWithCustomerContact(id: string) {
+    return this.prisma.lead.findUnique({
+      where: { id },
+      include: { customer: { select: { name: true, phone: true } } },
     });
   }
 
