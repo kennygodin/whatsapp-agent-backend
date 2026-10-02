@@ -6,11 +6,11 @@ import { MessageStatus } from '../../../generated/prisma/client';
 import { QUEUES } from '../../../common/queue.constants';
 import { MessagesService } from '../../messages/messages.service';
 import type { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
-import { TwilioService } from '../twilio.service';
 import {
   OUTBOUND_RATE_LIMIT,
   OUTBOUND_SEND_FAILED,
 } from '../whatsapp.constants';
+import { TwilioService } from '../../twilio/twilio.service';
 
 @Processor(QUEUES.WHATSAPP_OUTBOUND, {
   concurrency: 1,

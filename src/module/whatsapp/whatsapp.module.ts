@@ -6,10 +6,11 @@ import { MessagesModule } from '../messages/messages.module';
 import { ConversationTurnProcessor } from './processors/conversation-turn.processor';
 import { IntakeProcessor } from './processors/intake.processor';
 import { OutboundProcessor } from './processors/outbound.processor';
-import { TwilioService } from './twilio.service';
 import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
 import { AgentModule } from '../agent/agent.module';
+import { TwilioModule } from '../twilio/twilio.module';
+import { AlertsModule } from '../alerts/alerts.module';
 
 @Module({
   imports: [
@@ -19,13 +20,15 @@ import { AgentModule } from '../agent/agent.module';
       { name: QUEUES.WHATSAPP_OUTBOUND },
     ),
     AgentModule,
+    AlertsModule,
     LeadsModule,
     MessagesModule,
+    TwilioModule,
   ],
+
   controllers: [WhatsappController],
   providers: [
     WhatsappService,
-    TwilioService,
     IntakeProcessor,
     ConversationTurnProcessor,
     OutboundProcessor,

@@ -12,13 +12,18 @@ import type { ConversationTurnJob } from '../interfaces/conversation-turn-job.in
 import type { OutboundMessageJob } from '../interfaces/outbound-message-job.interface';
 import { remainingWaitMs } from '../turn-timing';
 import { toWhatsAppFormatting } from '../whatsapp-format';
+import { EscalationService } from '../../alerts/escalation.service';
+
 import {
   AGENT_FALLBACK_REPLY,
+  ESCALATED_FALLBACK_REPLY,
+  ESCALATION_FAILED,
   MAX_WHATSAPP_BODY_LENGTH,
   MEDIA_NOT_SUPPORTED_REPLY,
   OUTBOUND_JOB_NAME,
   TURN_CONCURRENCY,
   TURN_FAILED_FALLBACK_SENT,
+  TURN_FAILURE_ESCALATION_REASON,
 } from '../whatsapp.constants';
 
 @Processor(QUEUES.CONVERSATION_TURN, { concurrency: TURN_CONCURRENCY })
@@ -29,6 +34,7 @@ export class ConversationTurnProcessor extends WorkerHost {
     private readonly leadsService: LeadsService,
     private readonly messagesService: MessagesService,
     private readonly salesAgentService: SalesAgentService,
+    private readonly escalationService: EscalationService,
     @InjectQueue(QUEUES.WHATSAPP_OUTBOUND)
     private readonly outboundQueue: Queue<OutboundMessageJob>,
   ) {
@@ -46,7 +52,11 @@ export class ConversationTurnProcessor extends WorkerHost {
         `${TURN_FAILED_FALLBACK_SENT} (lead ${job.data.leadId})`,
         error,
       );
-      await this.sendFallbackReply(job.data.leadId);
+      const handedOver = await this.escalateFailedTurn(job.data.leadId);
+      await this.sendFallbackReply(
+        job.data.leadId,
+        handedOver ? ESCALATED_FALLBACK_REPLY : AGENT_FALLBACK_REPLY,
+      );
     }
   }
 
@@ -101,16 +111,17 @@ export class ConversationTurnProcessor extends WorkerHost {
     );
   }
 
-  private async sendFallbackReply(leadId: string) {
-    const pending = await this.messagesService.findUnprocessedInbound(leadId);
-    if (pending.length === 0) {
-      return;
+  private async escalateFailedTurn(leadId: string): Promise<boolean> {
+    try {
+      await this.escalationService.escalate(
+        leadId,
+        TURN_FAILURE_ESCALATION_REASON,
+      );
+      return true;
+    } catch (error) {
+      this.logger.error(`${ESCALATION_FAILED} (lead ${leadId})`, error);
+      return false;
     }
-    await this.sendReply(
-      leadId,
-      AGENT_FALLBACK_REPLY,
-      pending.map((message) => message.id),
-    );
   }
 
   private async sendReply(leadId: string, text: string, pendingIds: string[]) {
@@ -123,6 +134,18 @@ export class ConversationTurnProcessor extends WorkerHost {
       OUTBOUND_JOB_NAME,
       { messageId: reply.id },
       { jobId: reply.id },
+    );
+  }
+
+  private async sendFallbackReply(leadId: string, text: string) {
+    const pending = await this.messagesService.findUnprocessedInbound(leadId);
+    if (pending.length === 0) {
+      return;
+    }
+    await this.sendReply(
+      leadId,
+      text,
+      pending.map((message) => message.id),
     );
   }
 }

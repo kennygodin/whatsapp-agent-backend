@@ -66,3 +66,8 @@ export const deliveryFailedLog = (
   `WhatsApp message ${twilioSid} ${status} (Twilio error ${errorCode ?? 'none'})`;
 export const TURN_FAILED_FALLBACK_SENT =
   'Turn failed on final attempt; fallback reply sent';
+export const ESCALATED_FALLBACK_REPLY =
+  "Sorry, I'm having trouble right now. I've passed your message to a team member, and they'll reply here soon.";
+export const TURN_FAILURE_ESCALATION_REASON =
+  'The assistant failed to reply after several attempts.';
+export const ESCALATION_FAILED = 'Could not escalate failed turn';
