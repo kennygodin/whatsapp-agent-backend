@@ -19,28 +19,17 @@ const POWER_BANK = {
   stock: 20,
 };
 
-type PendingOrder = {
-  id: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  totalAmount: number;
-  status: string;
-};
-
 function build(
   options: {
     customerEmail?: string | null;
     product?: typeof POWER_BANK | null;
-    pending?: PendingOrder | null;
   } = {},
 ) {
   const created: Record<string, unknown>[] = [];
   const startedLeads: string[] = [];
 
   const ordersRepository = {
-    findPendingForLead: async () => options.pending ?? null,
-    createReplacingPending: async (data: Record<string, unknown>) => {
+    replacePendingOrder: async (data: Record<string, unknown>) => {
       created.push(data);
       return {
         id: 'order-1',
@@ -144,44 +133,13 @@ describe('OrdersService.createForLead', () => {
     ).rejects.toThrow(new OrderRuleError(EMAIL_INVALID));
   });
 
-  describe('when a pending order already exists', () => {
-    const pending: PendingOrder = {
-      id: 'order-existing',
-      productId: 'product-1',
-      quantity: 2,
-      unitPrice: 2500000,
-      totalAmount: 5000000,
-      status: 'pending',
-    };
-
-    it('returns it unchanged when product and quantity are the same', async () => {
-      const { service, created } = build({ pending });
-
-      const order = await service.createForLead({ ...input, quantity: 2 });
-
-      expect(order.orderId).toBe('order-existing');
-      expect(created).toHaveLength(0);
+  it('does not resend an email the customer already has', async () => {
+    const { service, created } = build();
+    await service.createForLead({
+      ...input,
+      quantity: 1,
+      email: 'ADA@example.com',
     });
-
-    it('treats the same email again as no change', async () => {
-      const { service, created } = build({ pending });
-
-      await service.createForLead({
-        ...input,
-        quantity: 2,
-        email: 'ADA@example.com',
-      });
-
-      expect(created).toHaveLength(0);
-    });
-
-    it('replaces it when the quantity changes', async () => {
-      const { service, created } = build({ pending });
-
-      const order = await service.createForLead({ ...input, quantity: 3 });
-
-      expect(order.orderId).toBe('order-1');
-      expect(created[0]).toMatchObject({ quantity: 3, totalAmount: 7500000 });
-    });
+    expect(created[0].email).toBeUndefined();
   });
 });
