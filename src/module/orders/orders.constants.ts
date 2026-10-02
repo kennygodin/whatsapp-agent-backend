@@ -1,5 +1,6 @@
 export const MAX_ORDER_QUANTITY = 10;
 export const RECENT_ORDERS_LIMIT = 3;
+export const PAYMENT_CURRENCY = 'NGN';
 
 export const QUANTITY_INVALID = `quantity must be a whole number from 1 to ${MAX_ORDER_QUANTITY}.`;
 export const PRODUCT_NOT_AVAILABLE =

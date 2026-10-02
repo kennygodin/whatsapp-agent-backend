@@ -14,6 +14,36 @@ export class OrdersRepository {
     });
   }
 
+  findByReference(reference: string) {
+    return this.prisma.order.findUnique({
+      where: { paymentReference: reference },
+      include: { product: { select: { name: true } } },
+    });
+  }
+
+  markPaidAndDecrementStock(data: {
+    orderId: string;
+    productId: string;
+    quantity: number;
+    paidAt: Date;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const paid = await tx.order.updateMany({
+        where: { id: data.orderId, status: OrderStatus.pending },
+        data: { status: OrderStatus.paid, paidAt: data.paidAt },
+      });
+      if (paid.count === 0) {
+        return { marked: false, stockOk: false };
+      }
+
+      const stock = await tx.product.updateMany({
+        where: { id: data.productId, stock: { gte: data.quantity } },
+        data: { stock: { decrement: data.quantity } },
+      });
+      return { marked: true, stockOk: stock.count > 0 };
+    });
+  }
+
   attachPaymentLink(orderId: string, reference: string, url: string) {
     return this.prisma.order.updateMany({
       where: {

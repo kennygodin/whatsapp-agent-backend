@@ -4,6 +4,7 @@ import { CustomersRepository } from './customers.repository';
 import { LeadsRepository } from './leads.repository';
 import {
   CLOSED_LEAD_STAGES,
+  CONVERTIBLE_STAGES,
   CUSTOMER_NOT_FOUND,
   LEAD_NOT_FOUND,
   ORDER_START_STAGES,
@@ -77,6 +78,13 @@ export class LeadsService {
     const lead = await this.getById(id);
     if (ORDER_START_STAGES.includes(lead.stage)) {
       await this.transitionStage(id, lead.stage, LeadStage.order_started);
+    }
+  }
+
+  async markConverted(id: string) {
+    const lead = await this.getById(id);
+    if (CONVERTIBLE_STAGES.includes(lead.stage)) {
+      await this.transitionStage(id, lead.stage, LeadStage.converted);
     }
   }
 

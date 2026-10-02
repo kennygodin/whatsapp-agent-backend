@@ -18,6 +18,7 @@ import appConfig from './config/app.config';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappModule } from './module/whatsapp/whatsapp.module';
+import { PaymentsModule } from './module/payments/payments.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { WhatsappModule } from './module/whatsapp/whatsapp.module';
 
     PrismaModule,
     WhatsappModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [
