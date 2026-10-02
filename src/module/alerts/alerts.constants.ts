@@ -26,3 +26,9 @@ export const escalationAlertText = (alert: EscalationAlertJob) =>
     '',
     'The bot is paused for this chat until the conversation is resumed.',
   ].join('\n');
+
+export const alertFailedLog = (
+  channel: string,
+  leadId: string,
+  attemptsMade: number,
+) => `Alert failed: channel=${channel} lead=${leadId} attempts=${attemptsMade}`;

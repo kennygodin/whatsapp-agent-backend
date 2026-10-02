@@ -7,6 +7,8 @@ import {
   GROUNDING_FALLBACK_REPLY,
   HISTORY_MESSAGE_LIMIT,
   agentTurnSummary,
+  ungroundedLinkCorrection,
+  ungroundedLinksLog,
   ungroundedPriceCorrection,
   ungroundedPricesLog,
 } from './agent.constants';
@@ -16,6 +18,7 @@ import {
   buildSystemPrompt,
   skillForStage,
 } from './skills/system-prompt.builder';
+import { findUngroundedUrls } from './grounding/link-check';
 
 export interface SalesTurnInput {
   leadId: string;
@@ -48,19 +51,35 @@ export class SalesAgentService {
       }),
       history: toChatHistory(recent),
       context: { leadId: input.leadId, customerId: input.customerId },
-      validateReply: (reply, facts) => {
-        const ungrounded = findUngroundedPrices(reply, facts);
-        if (ungrounded.length === 0) {
-          return null;
-        }
-        this.logger.warn(ungroundedPricesLog(input.leadId, ungrounded));
-        return ungroundedPriceCorrection(ungrounded);
-      },
+      validateReply: (reply, facts) =>
+        this.checkGrounding(input.leadId, reply, facts),
     });
 
     this.logger.log(agentTurnSummary(input.leadId, skill, result));
     return result.rejected
       ? { ...result, reply: GROUNDING_FALLBACK_REPLY }
       : result;
+  }
+
+  private checkGrounding(
+    leadId: string,
+    reply: string,
+    facts: string,
+  ): string | null {
+    const corrections: string[] = [];
+
+    const prices = findUngroundedPrices(reply, facts);
+    if (prices.length > 0) {
+      this.logger.warn(ungroundedPricesLog(leadId, prices));
+      corrections.push(ungroundedPriceCorrection(prices));
+    }
+
+    const urls = findUngroundedUrls(reply, facts);
+    if (urls.length > 0) {
+      this.logger.warn(ungroundedLinksLog(leadId, urls));
+      corrections.push(ungroundedLinkCorrection(urls));
+    }
+
+    return corrections.length > 0 ? corrections.join('\n') : null;
   }
 }

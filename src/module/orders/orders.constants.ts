@@ -10,3 +10,11 @@ export const EMAIL_REQUIRED =
   'The customer has no email address on file. Ask for their email address (it is needed for the payment receipt), then call create_order again with it.';
 export const EMAIL_INVALID =
   'That email address is not valid. Ask the customer to check it.';
+
+export const PAYMENT_REFERENCE_PREFIX = 'ord';
+export const paymentReference = (orderId: string) =>
+  `${PAYMENT_REFERENCE_PREFIX}-${orderId}-${Date.now()}`;
+export const NO_PENDING_ORDER =
+  'There is no unpaid order for this customer. Create the order with create_order first.';
+export const ORDER_CHANGED =
+  'The order changed while the payment link was being created. Call generate_payment_link again.';

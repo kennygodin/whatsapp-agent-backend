@@ -99,3 +99,12 @@ export const ORDER_ARGUMENTS_INVALID =
 export const GET_ORDER_STATUS_TOOL_NAME = 'get_order_status';
 export const GET_ORDER_STATUS_DESCRIPTION =
   "Look up this customer's most recent orders with their status (pending, paid or cancelled) and totals. Use it when they ask about their order.";
+
+export const GENERATE_PAYMENT_LINK_TOOL_NAME = 'generate_payment_link';
+export const GENERATE_PAYMENT_LINK_DESCRIPTION =
+  "Get the secure Paystack payment link for the customer's unpaid order. Returns the same link if one already exists. Send the paymentUrl to the customer exactly as returned, on its own line.";
+
+export const ungroundedLinkCorrection = (urls: string[]) =>
+  `Automatic check: your reply contains ${urls.join(', ')}, which did not come from a tool result in this conversation. Only share links exactly as a tool returned them. If you need the payment link, call generate_payment_link.`;
+export const ungroundedLinksLog = (leadId: string, urls: string[]) =>
+  `lead=${leadId} reply contained ungrounded links ${urls.join(', ')}`;

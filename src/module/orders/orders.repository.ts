@@ -6,6 +6,25 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  findPendingForLead(leadId: string) {
+    return this.prisma.order.findFirst({
+      where: { leadId, status: OrderStatus.pending },
+      orderBy: { createdAt: 'desc' },
+      include: { product: { select: { name: true } } },
+    });
+  }
+
+  attachPaymentLink(orderId: string, reference: string, url: string) {
+    return this.prisma.order.updateMany({
+      where: {
+        id: orderId,
+        status: OrderStatus.pending,
+        paymentReference: null,
+      },
+      data: { paymentReference: reference, paymentUrl: url },
+    });
+  }
+
   replacePendingOrder(data: {
     leadId: string;
     customerId: string;

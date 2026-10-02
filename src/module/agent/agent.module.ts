@@ -15,6 +15,7 @@ import { EscalateToHumanTool } from './tools/escalate-to-human.tool';
 import { GetOrderStatusTool } from './tools/get-order-status.tool';
 import { SearchCatalogTool } from './tools/search-catalog.tool';
 import { ToolRegistry } from './tools/tool-registry';
+import { GeneratePaymentLinkTool } from './tools/generate-payment-link.tool';
 
 @Module({
   imports: [ProductsModule, MessagesModule, AlertsModule, OrdersModule],
@@ -25,6 +26,7 @@ import { ToolRegistry } from './tools/tool-registry';
     SearchCatalogTool,
     CreateOrderTool,
     GetOrderStatusTool,
+    GeneratePaymentLinkTool,
     EscalateToHumanTool,
     {
       provide: AGENT_TOOLS,
@@ -33,6 +35,7 @@ import { ToolRegistry } from './tools/tool-registry';
         SearchCatalogTool,
         CreateOrderTool,
         GetOrderStatusTool,
+        GeneratePaymentLinkTool,
         EscalateToHumanTool,
       ],
     },

@@ -9,11 +9,15 @@ import {
   EMAIL_INVALID,
   EMAIL_REQUIRED,
   MAX_ORDER_QUANTITY,
+  NO_PENDING_ORDER,
+  ORDER_CHANGED,
   PRODUCT_NOT_AVAILABLE,
   QUANTITY_INVALID,
   RECENT_ORDERS_LIMIT,
   notEnoughStock,
+  paymentReference,
 } from './orders.constants';
+import { PaystackService } from '../paystack/paystack.service';
 
 export interface CreateOrderInput {
   leadId: string;
@@ -29,6 +33,7 @@ export class OrdersService {
     private readonly ordersRepository: OrdersRepository,
     private readonly productsService: ProductsService,
     private readonly leadsService: LeadsService,
+    private readonly paystackService: PaystackService,
   ) {}
 
   async createForLead(input: CreateOrderInput) {
@@ -79,6 +84,46 @@ export class OrdersService {
       total: formatNaira(order.totalAmount),
       status: order.status,
     };
+  }
+
+  async createPaymentLink(input: { leadId: string; customerId: string }) {
+    const order = await this.ordersRepository.findPendingForLead(input.leadId);
+    if (!order) {
+      throw new OrderRuleError(NO_PENDING_ORDER);
+    }
+
+    const summary = {
+      product: order.product.name,
+      quantity: order.quantity,
+      total: formatNaira(order.totalAmount),
+    };
+    if (order.paymentUrl) {
+      return { ...summary, paymentUrl: order.paymentUrl };
+    }
+
+    const customer = await this.leadsService.getCustomer(input.customerId);
+    if (!customer.email) {
+      throw new OrderRuleError(EMAIL_REQUIRED);
+    }
+
+    const reference = paymentReference(order.id);
+    const { authorizationUrl } =
+      await this.paystackService.initializeTransaction({
+        email: customer.email,
+        amountKobo: order.totalAmount,
+        reference,
+        metadata: { orderId: order.id, leadId: input.leadId },
+      });
+
+    const { count } = await this.ordersRepository.attachPaymentLink(
+      order.id,
+      reference,
+      authorizationUrl,
+    );
+    if (count === 0) {
+      throw new OrderRuleError(ORDER_CHANGED);
+    }
+    return { ...summary, paymentUrl: authorizationUrl };
   }
 
   async recentForCustomer(customerId: string) {
