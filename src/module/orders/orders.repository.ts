@@ -6,14 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findPendingForLead(leadId: string) {
-    return this.prisma.order.findFirst({
-      where: { leadId, status: OrderStatus.pending },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  createReplacingPending(data: {
+  replacePendingOrder(data: {
     leadId: string;
     customerId: string;
     productId: string;
@@ -23,6 +16,20 @@ export class OrdersRepository {
     email?: string;
   }) {
     return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM leads WHERE id = ${data.leadId} FOR UPDATE`;
+
+      const pending = await tx.order.findFirst({
+        where: { leadId: data.leadId, status: OrderStatus.pending },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (
+        pending?.productId === data.productId &&
+        pending.quantity === data.quantity &&
+        !data.email
+      ) {
+        return pending;
+      }
+
       await tx.order.updateMany({
         where: { leadId: data.leadId, status: OrderStatus.pending },
         data: { status: OrderStatus.cancelled, cancelledAt: new Date() },

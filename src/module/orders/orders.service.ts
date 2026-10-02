@@ -59,26 +59,16 @@ export class OrdersService {
     }
     const newEmail = email && email !== customer.email ? email : undefined;
 
-    const pending = await this.ordersRepository.findPendingForLead(
-      input.leadId,
-    );
-    const unchanged =
-      pending?.productId === product.id &&
-      pending.quantity === quantity &&
-      !newEmail;
+    const order = await this.ordersRepository.replacePendingOrder({
+      leadId: input.leadId,
+      customerId: input.customerId,
+      productId: product.id,
+      quantity,
+      unitPrice: product.price,
+      totalAmount: product.price * quantity,
+      email: newEmail,
+    });
 
-    const order =
-      unchanged && pending
-        ? pending
-        : await this.ordersRepository.createReplacingPending({
-            leadId: input.leadId,
-            customerId: input.customerId,
-            productId: product.id,
-            quantity,
-            unitPrice: product.price,
-            totalAmount: product.price * quantity,
-            email: newEmail,
-          });
     await this.leadsService.markOrderStarted(input.leadId);
 
     return {
