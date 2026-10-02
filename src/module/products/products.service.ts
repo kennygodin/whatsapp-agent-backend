@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { formatNaira } from '../../common/utils/money.util'
+import { formatNaira } from '../../common/utils/money.util';
 import { ProductsRepository } from './products.repository';
 import {
   MAX_SEARCH_RESULTS,
@@ -19,6 +19,10 @@ export interface CatalogItem {
 @Injectable()
 export class ProductsService {
   constructor(private readonly productsRepository: ProductsRepository) {}
+
+  findActiveById(id: string) {
+    return this.productsRepository.findActiveById(id);
+  }
 
   async search(query: string): Promise<CatalogItem[]> {
     const terms = this.toSearchTerms(query);
