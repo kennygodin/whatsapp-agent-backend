@@ -4,9 +4,12 @@ import type { ProductsService } from '../products/products.service';
 import { OrderRuleError } from './order-rule.error';
 import type { OrdersRepository } from './orders.repository';
 import { OrdersService } from './orders.service';
+import type { PaystackService } from '../paystack/paystack.service';
 import {
   EMAIL_INVALID,
   EMAIL_REQUIRED,
+  NO_PENDING_ORDER,
+  ORDER_CHANGED,
   PRODUCT_NOT_AVAILABLE,
   QUANTITY_INVALID,
   notEnoughStock,
@@ -23,12 +26,27 @@ function build(
   options: {
     customerEmail?: string | null;
     product?: typeof POWER_BANK | null;
+    pendingOrder?: Record<string, unknown> | null;
+    attachCount?: number;
+    paidOrder?: Record<string, unknown> | null;
+    marked?: boolean;
+    stockOk?: boolean;
   } = {},
 ) {
   const created: Record<string, unknown>[] = [];
   const startedLeads: string[] = [];
+  const convertedLeads: string[] = [];
+
+  const initialized: Record<string, unknown>[] = [];
 
   const ordersRepository = {
+    findPendingForLead: async () => options.pendingOrder ?? null,
+    findByReference: async () => options.paidOrder ?? null,
+    markPaidAndDecrementStock: async () => ({
+      marked: options.marked ?? true,
+      stockOk: options.stockOk ?? true,
+    }),
+    attachPaymentLink: async () => ({ count: options.attachCount ?? 1 }),
     replacePendingOrder: async (data: Record<string, unknown>) => {
       created.push(data);
       return {
@@ -54,12 +72,32 @@ function build(
     markOrderStarted: async (leadId: string) => {
       startedLeads.push(leadId);
     },
+    markConverted: async (leadId: string) => {
+      convertedLeads.push(leadId);
+    },
   } as unknown as LeadsService;
 
+  const paystackService = {
+    initializeTransaction: async (input: Record<string, unknown>) => {
+      initialized.push(input);
+      return {
+        authorizationUrl: 'https://checkout.paystack.com/new-link',
+        reference: input.reference,
+      };
+    },
+  } as unknown as PaystackService;
+
   return {
-    service: new OrdersService(ordersRepository, productsService, leadsService),
+    service: new OrdersService(
+      ordersRepository,
+      productsService,
+      leadsService,
+      paystackService,
+    ),
     created,
     startedLeads,
+    initialized,
+    convertedLeads,
   };
 }
 
@@ -141,5 +179,153 @@ describe('OrdersService.createForLead', () => {
       email: 'ADA@example.com',
     });
     expect(created[0].email).toBeUndefined();
+  });
+
+  describe('OrdersService.createPaymentLink', () => {
+    const pendingOrder = {
+      id: 'order-1',
+      quantity: 3,
+      totalAmount: 7500000,
+      paymentUrl: null,
+      product: { name: '20,000mAh Power Bank' },
+    };
+    const ids = { leadId: 'lead-1', customerId: 'customer-1' };
+
+    it('asks for an order first when there is none', async () => {
+      const { service } = build({ pendingOrder: null });
+      await expect(service.createPaymentLink(ids)).rejects.toThrow(
+        new OrderRuleError(NO_PENDING_ORDER),
+      );
+    });
+
+    it('charges the server-side total to the customer email with a fresh reference', async () => {
+      const { service, initialized } = build({ pendingOrder });
+
+      const link = await service.createPaymentLink(ids);
+
+      expect(link).toEqual({
+        product: '20,000mAh Power Bank',
+        quantity: 3,
+        total: '₦75,000',
+        paymentUrl: 'https://checkout.paystack.com/new-link',
+      });
+      expect(initialized[0]).toMatchObject({
+        email: 'ada@example.com',
+        amountKobo: 7500000,
+        metadata: { orderId: 'order-1', leadId: 'lead-1' },
+      });
+      expect(String(initialized[0].reference)).toStartWith('ord-order-1-');
+    });
+
+    it('reuses an existing link instead of creating another transaction', async () => {
+      const { service, initialized } = build({
+        pendingOrder: {
+          ...pendingOrder,
+          paymentUrl: 'https://checkout.paystack.com/old',
+        },
+      });
+
+      const link = await service.createPaymentLink(ids);
+
+      expect(link.paymentUrl).toBe('https://checkout.paystack.com/old');
+      expect(initialized).toHaveLength(0);
+    });
+
+    it('refuses to attach a link if the order changed meanwhile', async () => {
+      const { service } = build({ pendingOrder, attachCount: 0 });
+      await expect(service.createPaymentLink(ids)).rejects.toThrow(
+        new OrderRuleError(ORDER_CHANGED),
+      );
+    });
+  });
+
+  describe('OrdersService.recordPayment', () => {
+    const order = {
+      id: 'order-1',
+      leadId: 'lead-1',
+      productId: 'product-1',
+      quantity: 2,
+      totalAmount: 5000000,
+      status: 'pending',
+      product: { name: '20,000mAh Power Bank' },
+    };
+    const payment = {
+      reference: 'ord-order-1-1',
+      amountKobo: 5000000,
+      currency: 'NGN',
+      paidAt: new Date('2026-10-02T15:00:00Z'),
+    };
+
+    it('marks a matching payment paid and converts the lead', async () => {
+      const { service, convertedLeads } = build({ paidOrder: order });
+
+      expect(await service.recordPayment(payment)).toEqual({
+        kind: 'paid',
+        leadId: 'lead-1',
+        stockOk: true,
+        product: '20,000mAh Power Bank',
+        quantity: 2,
+        total: '₦50,000',
+      });
+      expect(convertedLeads).toEqual(['lead-1']);
+    });
+
+    it('ignores a reference that matches no order', async () => {
+      const { service } = build({ paidOrder: null });
+      expect(await service.recordPayment(payment)).toEqual({
+        kind: 'unknown_reference',
+      });
+    });
+
+    it('treats a repeat of an already paid order as a duplicate', async () => {
+      const { service, convertedLeads } = build({
+        paidOrder: { ...order, status: 'paid' },
+      });
+      expect(await service.recordPayment(payment)).toEqual({
+        kind: 'already_paid',
+      });
+      expect(convertedLeads).toHaveLength(0);
+    });
+
+    it('flags payment for a cancelled order instead of marking it paid', async () => {
+      const { service } = build({
+        paidOrder: { ...order, status: 'cancelled' },
+      });
+      expect(await service.recordPayment(payment)).toEqual({
+        kind: 'paid_cancelled_order',
+        leadId: 'lead-1',
+      });
+    });
+
+    it.each([
+      ['amount', { amountKobo: 100 }],
+      ['currency', { currency: 'USD' }],
+    ])('refuses a %s that does not match the order', async (_label, change) => {
+      const { service, convertedLeads } = build({ paidOrder: order });
+      expect(await service.recordPayment({ ...payment, ...change })).toEqual({
+        kind: 'amount_mismatch',
+        leadId: 'lead-1',
+      });
+      expect(convertedLeads).toHaveLength(0);
+    });
+
+    it('reports a payment that arrives after stock ran out', async () => {
+      const { service } = build({ paidOrder: order, stockOk: false });
+      expect(await service.recordPayment(payment)).toMatchObject({
+        kind: 'paid',
+        stockOk: false,
+      });
+    });
+
+    it('does nothing when another delivery of the webhook already marked it paid', async () => {
+      const { service, convertedLeads } = build({
+        paidOrder: order,
+        marked: false,
+      });
+      expect(await service.recordPayment(payment)).toEqual({
+        kind: 'already_paid',
+      });
+      expect(convertedLeads).toHaveLength(0);
+    });
   });
 });

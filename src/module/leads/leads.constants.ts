@@ -1,5 +1,12 @@
 import { LeadStage } from '../../generated/prisma/client';
 
+export const CONVERTIBLE_STAGES: LeadStage[] = [
+  LeadStage.new,
+  LeadStage.engaged,
+  LeadStage.order_started,
+  LeadStage.dropped_off,
+];
+
 export const CLOSED_LEAD_STAGES: LeadStage[] = [
   LeadStage.converted,
   LeadStage.dropped_off,

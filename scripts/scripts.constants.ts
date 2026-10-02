@@ -20,3 +20,7 @@ export const SMOKE_TEST_TOOL_RESULT = {
     ],
   },
 };
+
+export const PAYSTACK_WEBHOOK_PATH = '/api/v1/webhooks/paystack';
+export const PAYSTACK_REFERENCE_REQUIRED =
+  'Usage: bun scripts/send-test-paystack-webhook.ts <payment reference>';

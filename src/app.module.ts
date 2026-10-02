@@ -6,6 +6,7 @@ import twilioConfig from './config/twilio.config';
 import llmConfig from './config/llm.config';
 import mailConfig from './config/mail.config';
 import alertsConfig from './config/alerts.config';
+import paystackConfig from './config/paystack.config';
 import { redisConnectionOptions } from './common/utils/redis-connection.util';
 import { DEFAULT_JOB_OPTIONS } from './common/queue.constants';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -17,6 +18,7 @@ import appConfig from './config/app.config';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappModule } from './module/whatsapp/whatsapp.module';
+import { PaymentsModule } from './module/payments/payments.module';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { WhatsappModule } from './module/whatsapp/whatsapp.module';
         llmConfig,
         mailConfig,
         alertsConfig,
+        paystackConfig,
       ],
       validate: validateEnv,
     }),
@@ -42,6 +45,7 @@ import { WhatsappModule } from './module/whatsapp/whatsapp.module';
 
     PrismaModule,
     WhatsappModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [

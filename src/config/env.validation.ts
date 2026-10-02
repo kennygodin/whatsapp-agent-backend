@@ -47,6 +47,9 @@ const envValidationSchema = Joi.object({
   ALERT_WHATSAPP: Joi.string()
     .pattern(/^\+\d+$/)
     .required(),
+  PAYSTACK_SECRET_KEY: Joi.string()
+    .pattern(/^sk_(test|live)_[A-Za-z0-9]+$/)
+    .required(),
 });
 
 export function validateEnv(config: Record<string, unknown>) {

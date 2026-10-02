@@ -1,5 +1,6 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { QUEUES } from '../../common/queue.constants';
 import { MailService } from '../mail/mail.service';
@@ -7,6 +8,7 @@ import { TwilioService } from '../twilio/twilio.service';
 import type { EscalationAlertJob } from './interfaces/escalation-alert-job.interface';
 import {
   ALERT_CHANNELS,
+  alertFailedLog,
   escalationAlertText,
   escalationEmailSubject,
   unknownAlertChannel,
@@ -14,6 +16,7 @@ import {
 
 @Processor(QUEUES.ALERTS)
 export class AlertsProcessor extends WorkerHost {
+  private readonly logger = new Logger(AlertsProcessor.name);
   private readonly alertEmail: string;
   private readonly alertWhatsapp: string;
 
@@ -53,5 +56,17 @@ export class AlertsProcessor extends WorkerHost {
     }
 
     throw new UnrecoverableError(unknownAlertChannel(job.name));
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<EscalationAlertJob> | undefined, error: Error) {
+    this.logger.error(
+      alertFailedLog(
+        job?.name ?? 'unknown',
+        job?.data.leadId ?? 'unknown',
+        job?.attemptsMade ?? 0,
+      ),
+      error,
+    );
   }
 }
