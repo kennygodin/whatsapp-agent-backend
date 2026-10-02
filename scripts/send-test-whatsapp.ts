@@ -13,7 +13,13 @@ import { Logger } from '@nestjs/common';
 const logger = new Logger('SendTestWhatsapp');
 
 async function main() {
-  const [, , body = DEFAULT_TEST_BODY, from = DEFAULT_TEST_FROM] = process.argv;
+  const [
+    ,
+    ,
+    body = DEFAULT_TEST_BODY,
+    from = process.env.TEST_WHATSAPP_FROM ?? DEFAULT_TEST_FROM,
+  ] = process.argv;
+
   const url = `${process.env.PUBLIC_BASE_URL}${WEBHOOK_PATH}`;
 
   const params: Record<string, string> = {

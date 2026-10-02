@@ -84,3 +84,18 @@ export const ESCALATE_REASON_DESCRIPTION =
   'One short sentence for the team member, e.g. "Customer wants a refund for a faulty charger".';
 export const ESCALATION_REASON_REQUIRED = 'reason must be a non-empty string';
 export const MAX_ESCALATION_REASON_LENGTH = 300;
+
+export const CREATE_ORDER_TOOL_NAME = 'create_order';
+export const CREATE_ORDER_DESCRIPTION =
+  "Create the customer's order for one product, replacing any order they have not paid for yet. Use it once the customer has confirmed the product and quantity. Returns the order with the total price calculated by the store; always use that total and never calculate prices yourself.";
+export const PRODUCT_ID_DESCRIPTION =
+  'The productId exactly as returned by search_catalog.';
+export const QUANTITY_DESCRIPTION = 'How many units the customer wants.';
+export const EMAIL_DESCRIPTION =
+  "The customer's email address, only if they gave it in this conversation. Leave it out otherwise.";
+export const ORDER_ARGUMENTS_INVALID =
+  'productId must be a string and quantity must be a number.';
+
+export const GET_ORDER_STATUS_TOOL_NAME = 'get_order_status';
+export const GET_ORDER_STATUS_DESCRIPTION =
+  "Look up this customer's most recent orders with their status (pending, paid or cancelled) and totals. Use it when they ask about their order.";

@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Lead, LeadStage } from '../../generated/prisma/client';
 import { CustomersRepository } from './customers.repository';
 import { LeadsRepository } from './leads.repository';
-import { CLOSED_LEAD_STAGES, LEAD_NOT_FOUND } from './leads.constants';
+import {
+  CLOSED_LEAD_STAGES,
+  CUSTOMER_NOT_FOUND,
+  LEAD_NOT_FOUND,
+  ORDER_START_STAGES,
+} from './leads.constants';
 
 @Injectable()
 export class LeadsService {
@@ -58,6 +63,21 @@ export class LeadsService {
       throw new Error(LEAD_NOT_FOUND);
     }
     return { lead, escalatedAt };
+  }
+
+  async getCustomer(id: string) {
+    const customer = await this.customersRepository.findById(id);
+    if (!customer) {
+      throw new Error(CUSTOMER_NOT_FOUND);
+    }
+    return customer;
+  }
+
+  async markOrderStarted(id: string) {
+    const lead = await this.getById(id);
+    if (ORDER_START_STAGES.includes(lead.stage)) {
+      await this.transitionStage(id, lead.stage, LeadStage.order_started);
+    }
   }
 
   transitionStage(id: string, from: LeadStage, to: LeadStage) {

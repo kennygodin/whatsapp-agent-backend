@@ -1,5 +1,6 @@
 import { LeadStage } from '../../../generated/prisma/client';
 import { PRODUCT_QA_SKILL } from './product-qa.skill';
+import { ORDER_COLLECTION_SKILL } from './order-collection.skill';
 import type { Skill } from './skill.interface';
 import {
   BASE_SYSTEM_PROMPT,
@@ -13,7 +14,7 @@ import {
 const SKILL_BY_STAGE: Record<LeadStage, Skill> = {
   [LeadStage.new]: PRODUCT_QA_SKILL,
   [LeadStage.engaged]: PRODUCT_QA_SKILL,
-  [LeadStage.order_started]: PRODUCT_QA_SKILL,
+  [LeadStage.order_started]: ORDER_COLLECTION_SKILL,
   [LeadStage.converted]: PRODUCT_QA_SKILL,
   [LeadStage.dropped_off]: PRODUCT_QA_SKILL,
 };
