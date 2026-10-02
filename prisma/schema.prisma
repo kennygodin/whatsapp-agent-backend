@@ -30,6 +30,9 @@ enum MessageStatus {
   received
   queued
   sent
+  delivered
+  read
+  undelivered
   failed
 }
 

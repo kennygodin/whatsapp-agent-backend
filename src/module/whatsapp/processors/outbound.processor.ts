@@ -1,6 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
+import { isFinalAttempt } from '../../../common/utils/job-attempts.util';
 import { MessageStatus } from '../../../generated/prisma/client';
 import { QUEUES } from '../../../common/queue.constants';
 import { MessagesService } from '../../messages/messages.service';
@@ -39,7 +40,7 @@ export class OutboundProcessor extends WorkerHost {
       await this.messagesService.markSent(message.id, sid);
     } catch (error) {
       const isPermanent = this.twilioService.isPermanentError(error);
-      const isLastAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+      const isLastAttempt = isFinalAttempt(job);
 
       if (isPermanent || isLastAttempt) {
         await this.messagesService.markFailed(

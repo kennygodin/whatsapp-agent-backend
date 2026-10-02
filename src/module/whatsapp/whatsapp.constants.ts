@@ -1,3 +1,10 @@
+import { MessageStatus } from '../../generated/prisma/client';
+import type { MessageStatus as TwilioMessageStatus } from 'twilio/lib/rest/api/v2010/account/message';
+import type { DeliveryStatus } from '../messages/messages.constants';
+
+export const WHATSAPP_WEBHOOK_ROUTE = 'webhooks/whatsapp';
+export const STATUS_CALLBACK_PATH = 'status';
+
 export const WHATSAPP_ADDRESS_PREFIX = 'whatsapp:';
 export const TWILIO_SIGNATURE_HEADER = 'x-twilio-signature';
 export const EMPTY_TWIML_RESPONSE =
@@ -42,4 +49,20 @@ export const TWILIO_REQUEST_TIMED_OUT = 'Twilio request timed out';
 export const OUTBOUND_SEND_FAILED = 'Failed to send WhatsApp message';
 export const AGENT_FALLBACK_REPLY =
   "Sorry, I'm having a little trouble right now. Please send your message again in a minute.";
-export const AGENT_TURN_FAILED = 'Agent turn failed on final attempt';
+
+export const TWILIO_DELIVERY_STATUSES: Partial<
+  Record<TwilioMessageStatus, DeliveryStatus>
+> = {
+  delivered: MessageStatus.delivered,
+  read: MessageStatus.read,
+  undelivered: MessageStatus.undelivered,
+  failed: MessageStatus.failed,
+};
+export const deliveryFailedLog = (
+  twilioSid: string,
+  status: string,
+  errorCode: string | null,
+) =>
+  `WhatsApp message ${twilioSid} ${status} (Twilio error ${errorCode ?? 'none'})`;
+export const TURN_FAILED_FALLBACK_SENT =
+  'Turn failed on final attempt; fallback reply sent';
