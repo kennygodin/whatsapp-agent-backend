@@ -91,6 +91,18 @@ export class MessagesRepository {
     });
   }
 
+  updateStatusBySid(
+    twilioSid: string,
+    status: MessageStatus,
+    errorCode: string | null,
+    fromStatuses: MessageStatus[],
+  ) {
+    return this.prisma.message.updateMany({
+      where: { twilioSid, status: { in: fromStatuses } },
+      data: { status, errorCode },
+    });
+  }
+
   markFailed(id: string, errorCode: string | null) {
     return this.prisma.message.update({
       where: { id },

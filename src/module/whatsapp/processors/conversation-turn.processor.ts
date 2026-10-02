@@ -4,6 +4,7 @@ import { DelayedError, Job, Queue } from 'bullmq';
 import { BotMode } from '../../../generated/prisma/client';
 import type { Message } from '../../../generated/prisma/client';
 import { QUEUES } from '../../../common/queue.constants';
+import { isFinalAttempt } from '../../../common/utils/job-attempts.util';
 import { SalesAgentService } from '../../agent/sales-agent.service';
 import { LeadsService } from '../../leads/leads.service';
 import { MessagesService } from '../../messages/messages.service';
@@ -13,11 +14,11 @@ import { remainingWaitMs } from '../turn-timing';
 import { toWhatsAppFormatting } from '../whatsapp-format';
 import {
   AGENT_FALLBACK_REPLY,
-  AGENT_TURN_FAILED,
   MAX_WHATSAPP_BODY_LENGTH,
   MEDIA_NOT_SUPPORTED_REPLY,
   OUTBOUND_JOB_NAME,
   TURN_CONCURRENCY,
+  TURN_FAILED_FALLBACK_SENT,
 } from '../whatsapp.constants';
 
 @Processor(QUEUES.CONVERSATION_TURN, { concurrency: TURN_CONCURRENCY })
@@ -35,6 +36,21 @@ export class ConversationTurnProcessor extends WorkerHost {
   }
 
   async process(job: Job<ConversationTurnJob>, token?: string) {
+    try {
+      await this.runTurn(job, token);
+    } catch (error) {
+      if (error instanceof DelayedError || !isFinalAttempt(job)) {
+        throw error;
+      }
+      this.logger.error(
+        `${TURN_FAILED_FALLBACK_SENT} (lead ${job.data.leadId})`,
+        error,
+      );
+      await this.sendFallbackReply(job.data.leadId);
+    }
+  }
+
+  private async runTurn(job: Job<ConversationTurnJob>, token?: string) {
     const { leadId } = job.data;
 
     const pending = await this.messagesService.findUnprocessedInbound(leadId);
@@ -61,27 +77,16 @@ export class ConversationTurnProcessor extends WorkerHost {
       return;
     }
 
-    const replyText = await this.buildReply(job, pending, {
+    const replyText = await this.buildReply(pending, {
       leadId,
       customerId: lead.customerId,
       stage: lead.stage,
       customerName: lead.customer.name,
     });
-
-    const reply = await this.messagesService.createReply(
-      leadId,
-      replyText,
-      pendingIds,
-    );
-    await this.outboundQueue.add(
-      OUTBOUND_JOB_NAME,
-      { messageId: reply.id },
-      { jobId: reply.id },
-    );
+    await this.sendReply(leadId, replyText, pendingIds);
   }
 
   private async buildReply(
-    job: Job<ConversationTurnJob>,
     pending: Message[],
     input: Parameters<SalesAgentService['respond']>[0],
   ): Promise<string> {
@@ -89,23 +94,35 @@ export class ConversationTurnProcessor extends WorkerHost {
       return MEDIA_NOT_SUPPORTED_REPLY;
     }
 
-    try {
-      const result = await this.salesAgentService.respond(input);
-      return (result.reply ?? AGENT_FALLBACK_REPLY).slice(
-        0,
-        MAX_WHATSAPP_BODY_LENGTH,
-      );
-    } catch (error) {
-      const isLastAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
-      if (!isLastAttempt) {
-        throw error;
-      }
-      this.logger.error(`${AGENT_TURN_FAILED} (lead ${input.leadId})`, error);
-      const result = await this.salesAgentService.respond(input);
-      return toWhatsAppFormatting(result.reply ?? AGENT_FALLBACK_REPLY).slice(
-        0,
-        MAX_WHATSAPP_BODY_LENGTH,
-      );
+    const result = await this.salesAgentService.respond(input);
+    return toWhatsAppFormatting(result.reply ?? AGENT_FALLBACK_REPLY).slice(
+      0,
+      MAX_WHATSAPP_BODY_LENGTH,
+    );
+  }
+
+  private async sendFallbackReply(leadId: string) {
+    const pending = await this.messagesService.findUnprocessedInbound(leadId);
+    if (pending.length === 0) {
+      return;
     }
+    await this.sendReply(
+      leadId,
+      AGENT_FALLBACK_REPLY,
+      pending.map((message) => message.id),
+    );
+  }
+
+  private async sendReply(leadId: string, text: string, pendingIds: string[]) {
+    const reply = await this.messagesService.createReply(
+      leadId,
+      text,
+      pendingIds,
+    );
+    await this.outboundQueue.add(
+      OUTBOUND_JOB_NAME,
+      { messageId: reply.id },
+      { jobId: reply.id },
+    );
   }
 }

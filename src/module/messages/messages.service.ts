@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Message, Prisma } from '../../generated/prisma/client';
 import { PRISMA_UNIQUE_VIOLATION } from '../../common/common.constants';
 import { MessagesRepository } from './messages.repository';
+import {
+  DELIVERY_STATUS_UPDATABLE_FROM,
+  type DeliveryStatus,
+} from './messages.constants';
 
 @Injectable()
 export class MessagesService {
@@ -53,6 +57,20 @@ export class MessagesService {
 
   markSent(id: string, twilioSid: string) {
     return this.messagesRepository.markSent(id, twilioSid);
+  }
+
+  async recordDeliveryStatus(
+    twilioSid: string,
+    status: DeliveryStatus,
+    errorCode: string | null,
+  ): Promise<boolean> {
+    const { count } = await this.messagesRepository.updateStatusBySid(
+      twilioSid,
+      status,
+      errorCode,
+      DELIVERY_STATUS_UPDATABLE_FROM[status],
+    );
+    return count > 0;
   }
 
   markFailed(id: string, errorCode: string | null) {
