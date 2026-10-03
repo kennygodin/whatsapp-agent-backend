@@ -19,6 +19,7 @@ import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappModule } from './module/whatsapp/whatsapp.module';
 import { PaymentsModule } from './module/payments/payments.module';
+import { LifecycleModule } from './module/lifecycle/lifecycle.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PaymentsModule } from './module/payments/payments.module';
     PrismaModule,
     WhatsappModule,
     PaymentsModule,
+    LifecycleModule,
   ],
   controllers: [AppController],
   providers: [

@@ -139,6 +139,8 @@ model Order {
   status           OrderStatus @default(pending)
   paymentReference String?     @unique
   paymentUrl       String?
+  paymentLinkSentAt DateTime?
+  nudgedAt         DateTime?
   paidAt           DateTime?
   cancelledAt      DateTime?
   createdAt        DateTime    @default(now())

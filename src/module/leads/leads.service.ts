@@ -7,6 +7,7 @@ import {
   CONVERTIBLE_STAGES,
   CUSTOMER_NOT_FOUND,
   LEAD_NOT_FOUND,
+  OPEN_LEAD_STAGES,
   ORDER_START_STAGES,
 } from './leads.constants';
 
@@ -86,6 +87,23 @@ export class LeadsService {
     if (CONVERTIBLE_STAGES.includes(lead.stage)) {
       await this.transitionStage(id, lead.stage, LeadStage.converted);
     }
+  }
+
+  async dropInactive(lastInboundBefore: Date, limit: number) {
+    const leads = await this.leadsRepository.findInactiveOpen(
+      OPEN_LEAD_STAGES,
+      lastInboundBefore,
+      limit,
+    );
+    let dropped = 0;
+    for (const lead of leads) {
+      if (
+        await this.transitionStage(lead.id, lead.stage, LeadStage.dropped_off)
+      ) {
+        dropped += 1;
+      }
+    }
+    return dropped;
   }
 
   transitionStage(id: string, from: LeadStage, to: LeadStage) {
