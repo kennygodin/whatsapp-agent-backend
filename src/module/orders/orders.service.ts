@@ -191,6 +191,28 @@ export class OrdersService {
     };
   }
 
+  async findNudgeCandidates(input: {
+    linkSentBefore: Date;
+    lastInboundAfter: Date;
+    limit: number;
+  }) {
+    const orders = await this.ordersRepository.findNudgeCandidates(input);
+    return orders.map((order) => ({
+      orderId: order.id,
+      leadId: order.leadId,
+      customerName: order.lead.customer.name,
+      product: order.product.name,
+      quantity: order.quantity,
+      total: formatNaira(order.totalAmount),
+      paymentUrl: order.paymentUrl as string,
+    }));
+  }
+
+  async claimNudge(orderId: string): Promise<boolean> {
+    const { count } = await this.ordersRepository.claimNudge(orderId);
+    return count > 0;
+  }
+
   async recentForCustomer(customerId: string) {
     const orders = await this.ordersRepository.findRecentForCustomer(
       customerId,

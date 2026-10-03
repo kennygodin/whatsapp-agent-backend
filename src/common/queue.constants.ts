@@ -6,6 +6,7 @@ export const QUEUES = {
   WHATSAPP_OUTBOUND: 'whatsapp-outbound',
   ALERTS: 'alerts',
   PAYMENTS: 'payments',
+  LIFECYCLE: 'lifecycle',
 } as const;
 
 export const DEFAULT_JOB_OPTIONS: DefaultJobOptions = {

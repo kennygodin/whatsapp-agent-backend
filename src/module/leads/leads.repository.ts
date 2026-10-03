@@ -44,6 +44,23 @@ export class LeadsRepository {
     });
   }
 
+  findInactiveOpen(
+    stages: LeadStage[],
+    lastInboundBefore: Date,
+    limit: number,
+  ) {
+    return this.prisma.lead.findMany({
+      where: {
+        stage: { in: stages },
+        botMode: BotMode.active,
+        lastInboundAt: { lt: lastInboundBefore },
+      },
+      orderBy: { lastInboundAt: 'asc' },
+      take: limit,
+      select: { id: true, stage: true },
+    });
+  }
+
   updateLastInboundAt(id: string, at: Date) {
     return this.prisma.lead.update({
       where: { id },

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus } from '../../generated/prisma/client';
+import { BotMode, LeadStage, OrderStatus } from '../../generated/prisma/client';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -11,6 +12,39 @@ export class OrdersRepository {
       where: { leadId, status: OrderStatus.pending },
       orderBy: { createdAt: 'desc' },
       include: { product: { select: { name: true } } },
+    });
+  }
+
+  findNudgeCandidates(input: {
+    linkSentBefore: Date;
+    lastInboundAfter: Date;
+    limit: number;
+  }) {
+    return this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.pending,
+        paymentUrl: { not: null },
+        paymentLinkSentAt: { lte: input.linkSentBefore },
+        nudgedAt: null,
+        lead: {
+          stage: LeadStage.order_started,
+          botMode: BotMode.active,
+          lastInboundAt: { gte: input.lastInboundAfter },
+        },
+      },
+      orderBy: { paymentLinkSentAt: 'asc' },
+      take: input.limit,
+      include: {
+        product: { select: { name: true } },
+        lead: { select: { customer: { select: { name: true } } } },
+      },
+    });
+  }
+
+  claimNudge(orderId: string) {
+    return this.prisma.order.updateMany({
+      where: { id: orderId, status: OrderStatus.pending, nudgedAt: null },
+      data: { nudgedAt: new Date() },
     });
   }
 
