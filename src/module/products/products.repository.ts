@@ -12,6 +12,10 @@ export class ProductsRepository {
     });
   }
 
+  findAll() {
+    return this.prisma.product.findMany({ orderBy: { name: 'asc' } });
+  }
+
   searchActive(terms: string[], limit: number) {
     return this.prisma.product.findMany({
       where: {

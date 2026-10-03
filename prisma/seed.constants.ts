@@ -54,3 +54,10 @@ export const SEED_PRODUCTS: Prisma.ProductCreateInput[] = [
     stock: 0,
   },
 ];
+
+export const ADMIN_CREDENTIALS_MISSING =
+  'ADMIN_EMAIL and ADMIN_PASSWORD must be set to seed the admin user';
+export const adminPasswordTooShort = (min: number) =>
+  `ADMIN_PASSWORD must be at least ${min} characters`;
+export const seededAdminMessage = (email: string) =>
+  `Admin user ready: ${email}`;

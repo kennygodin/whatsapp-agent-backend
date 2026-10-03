@@ -25,3 +25,4 @@ export const ORDER_START_STAGES: LeadStage[] = [
 
 export const LEAD_NOT_FOUND = 'Lead not found';
 export const CUSTOMER_NOT_FOUND = 'Customer not found';
+export const MESSAGE_PREVIEW_LENGTH = 120;

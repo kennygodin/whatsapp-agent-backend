@@ -213,6 +213,30 @@ export class OrdersService {
     return count > 0;
   }
 
+  async paidSummarySince(since: Date) {
+    const { _count, _sum } = await this.ordersRepository.sumPaidSince(since);
+    return {
+      paidOrders: _count._all,
+      revenue: formatNaira(_sum.totalAmount ?? 0),
+    };
+  }
+
+  async forLead(leadId: string) {
+    const orders = await this.ordersRepository.findForLead(leadId);
+    return orders.map((order) => ({
+      orderId: order.id,
+      product: order.product.name,
+      quantity: order.quantity,
+      total: formatNaira(order.totalAmount),
+      status: order.status,
+      paymentReference: order.paymentReference,
+      paymentLinkSentAt: order.paymentLinkSentAt?.toISOString() ?? null,
+      reminderSentAt: order.nudgedAt?.toISOString() ?? null,
+      paidAt: order.paidAt?.toISOString() ?? null,
+      placedAt: order.createdAt.toISOString(),
+    }));
+  }
+
   async recentForCustomer(customerId: string) {
     const orders = await this.ordersRepository.findRecentForCustomer(
       customerId,
