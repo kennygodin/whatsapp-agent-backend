@@ -46,6 +46,10 @@ enum BotMode {
   paused
 }
 
+enum Role {
+  admin
+}
+
 model Customer {
   id        String   @id @default(uuid())
   phone     String   @unique
@@ -152,4 +156,33 @@ model Order {
   @@index([leadId])
   @@index([status])
   @@map("orders")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(admin)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  apiKeys ApiKey[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String
+  name       String
+  prefix     String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
 }

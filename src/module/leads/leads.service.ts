@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Lead, LeadStage } from '../../generated/prisma/client';
+import { BotMode, Lead, LeadStage } from '../../generated/prisma/client';
 import { CustomersRepository } from './customers.repository';
 import { LeadsRepository } from './leads.repository';
 import {
@@ -7,6 +7,7 @@ import {
   CONVERTIBLE_STAGES,
   CUSTOMER_NOT_FOUND,
   LEAD_NOT_FOUND,
+  MESSAGE_PREVIEW_LENGTH,
   OPEN_LEAD_STAGES,
   ORDER_START_STAGES,
 } from './leads.constants';
@@ -104,6 +105,53 @@ export class LeadsService {
       }
     }
     return dropped;
+  }
+
+  async reachedStagesSince(since: Date): Promise<Record<LeadStage, number>> {
+    const rows = await this.leadsRepository.countReachedStagesSince(since);
+    const counts = Object.fromEntries(
+      Object.values(LeadStage).map((stage) => [stage, 0]),
+    ) as Record<LeadStage, number>;
+    for (const row of rows) {
+      counts[row.stage] = row.leads;
+    }
+    return counts;
+  }
+
+  countPaused() {
+    return this.leadsRepository.countPaused();
+  }
+
+  async listConversations(filter: {
+    stage?: LeadStage;
+    botMode?: BotMode;
+    limit: number;
+  }) {
+    const leads = await this.leadsRepository.findConversations(filter);
+    return leads.map((lead) => {
+      const [lastMessage] = lead.messages;
+      return {
+        leadId: lead.id,
+        customerName: lead.customer.name,
+        phone: lead.customer.phone,
+        stage: lead.stage,
+        botMode: lead.botMode,
+        escalationReason: lead.escalationReason,
+        lastCustomerMessageAt: lead.lastInboundAt.toISOString(),
+        lastMessage: lastMessage
+          ? {
+              from: lastMessage.direction,
+              text: lastMessage.body.slice(0, MESSAGE_PREVIEW_LENGTH),
+              at: lastMessage.createdAt.toISOString(),
+            }
+          : null,
+      };
+    });
+  }
+
+  async resumeBot(id: string): Promise<boolean> {
+    const { count } = await this.leadsRepository.resumeBot(id);
+    return count > 0;
   }
 
   transitionStage(id: string, from: LeadStage, to: LeadStage) {

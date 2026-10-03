@@ -24,6 +24,18 @@ export class ProductsService {
     return this.productsRepository.findActiveById(id);
   }
 
+  async listWithStock() {
+    const products = await this.productsRepository.findAll();
+    return products.map((product) => ({
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      price: formatNaira(product.price),
+      stock: product.stock,
+      status: product.status,
+    }));
+  }
+
   async search(query: string): Promise<CatalogItem[]> {
     const terms = this.toSearchTerms(query);
     if (terms.length === 0) {

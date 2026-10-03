@@ -46,6 +46,14 @@ export class MessagesRepository {
     });
   }
 
+  findLatestForLead(leadId: string, limit: number) {
+    return this.prisma.message.findMany({
+      where: { leadId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
   markProcessed(ids: string[]) {
     return this.prisma.message.updateMany({
       where: { id: { in: ids } },

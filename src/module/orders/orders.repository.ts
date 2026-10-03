@@ -137,6 +137,22 @@ export class OrdersRepository {
     });
   }
 
+  sumPaidSince(since: Date) {
+    return this.prisma.order.aggregate({
+      where: { status: OrderStatus.paid, paidAt: { gte: since } },
+      _count: { _all: true },
+      _sum: { totalAmount: true },
+    });
+  }
+
+  findForLead(leadId: string) {
+    return this.prisma.order.findMany({
+      where: { leadId },
+      orderBy: { createdAt: 'desc' },
+      include: { product: { select: { name: true } } },
+    });
+  }
+
   findRecentForCustomer(customerId: string, limit: number) {
     return this.prisma.order.findMany({
       where: { lead: { customerId } },

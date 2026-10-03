@@ -20,6 +20,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappModule } from './module/whatsapp/whatsapp.module';
 import { PaymentsModule } from './module/payments/payments.module';
 import { LifecycleModule } from './module/lifecycle/lifecycle.module';
+import { McpModule } from './module/mcp/mcp.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { LifecycleModule } from './module/lifecycle/lifecycle.module';
     WhatsappModule,
     PaymentsModule,
     LifecycleModule,
+    McpModule,
   ],
   controllers: [AppController],
   providers: [

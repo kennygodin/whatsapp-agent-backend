@@ -43,6 +43,20 @@ export class MessagesService {
     return newestFirst.reverse();
   }
 
+  async historyForLead(leadId: string, limit: number) {
+    const newestFirst = await this.messagesRepository.findLatestForLead(
+      leadId,
+      limit,
+    );
+    return newestFirst.reverse().map((message) => ({
+      from: message.direction,
+      text: message.body,
+      status: message.status,
+      errorCode: message.errorCode,
+      at: message.createdAt.toISOString(),
+    }));
+  }
+
   createReply(leadId: string, body: string, processedIds: string[]) {
     return this.messagesRepository.createOutboundAndMarkProcessed(
       leadId,

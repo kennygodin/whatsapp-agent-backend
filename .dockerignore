@@ -8,7 +8,9 @@ dist
 src/generated
 coverage
 test
-scripts
+scripts/*
+!scripts/api-key.ts
+!scripts/scripts.constants.ts
 infra
 docker-compose.yml
 CLAUDE.md

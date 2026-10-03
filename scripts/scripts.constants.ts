@@ -24,3 +24,22 @@ export const SMOKE_TEST_TOOL_RESULT = {
 export const PAYSTACK_WEBHOOK_PATH = '/api/v1/webhooks/paystack';
 export const PAYSTACK_REFERENCE_REQUIRED =
   'Usage: bun scripts/send-test-paystack-webhook.ts <payment reference>';
+export const API_KEY_USAGE =
+  'Usage: bun scripts/api-key.ts create "Key name" | list | revoke wak_xxxxxxxx';
+export const NO_ADMIN_USER =
+  'No admin user found. Run the seed with ADMIN_EMAIL and ADMIN_PASSWORD first.';
+export const apiKeyCreatedMessage = (name: string, key: string) =>
+  `API key "${name}" created. Copy it now, it will not be shown again:\n\n${key}\n`;
+export const apiKeyListLine = (key: {
+  prefix: string;
+  name: string;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+}) =>
+  `${key.prefix}…  ${key.name}  created ${key.createdAt.toISOString()}  last used ${key.lastUsedAt?.toISOString() ?? 'never'}${key.revokedAt ? '  REVOKED' : ''}`;
+export const NO_API_KEYS = 'No API keys yet.';
+export const apiKeyRevokedMessage = (count: number, prefix: string) =>
+  count > 0
+    ? `Revoked ${count} key(s) starting with ${prefix}`
+    : `No active key starts with ${prefix}`;

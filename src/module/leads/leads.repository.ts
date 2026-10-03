@@ -61,6 +61,47 @@ export class LeadsRepository {
     });
   }
 
+  countReachedStagesSince(since: Date) {
+    return this.prisma.$queryRaw<{ stage: LeadStage; leads: number }[]>`
+      SELECT t."toStage" AS stage, COUNT(DISTINCT t."leadId")::int AS leads
+      FROM stage_transitions t
+      JOIN leads l ON l.id = t."leadId"
+      WHERE l."createdAt" >= ${since}
+      GROUP BY t."toStage"
+    `;
+  }
+
+  countPaused() {
+    return this.prisma.lead.count({ where: { botMode: BotMode.paused } });
+  }
+
+  findConversations(filter: {
+    stage?: LeadStage;
+    botMode?: BotMode;
+    limit: number;
+  }) {
+    return this.prisma.lead.findMany({
+      where: { stage: filter.stage, botMode: filter.botMode },
+      orderBy: { lastInboundAt: 'desc' },
+      take: filter.limit,
+      include: {
+        customer: { select: { name: true, phone: true } },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { direction: true, body: true, createdAt: true },
+        },
+      },
+    });
+  }
+
+  resumeBot(id: string) {
+    return this.prisma.lead.updateMany({
+      where: { id, botMode: BotMode.paused },
+      data: { botMode: BotMode.active },
+    });
+  }
+
   updateLastInboundAt(id: string, at: Date) {
     return this.prisma.lead.update({
       where: { id },
